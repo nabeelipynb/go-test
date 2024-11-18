@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -13,7 +14,9 @@ import (
 //go:embed frontend/dist/*
 var staticFiles embed.FS
 
-func main() {
+// Handler function for Vercel
+func Handler(w http.ResponseWriter, r *http.Request) {
+	// Create a new Fiber app instance for each request
 	app := fiber.New()
 
 	// Serve the index.html file for the root URL
@@ -29,11 +32,17 @@ func main() {
 		Browse:     false,                // Disable directory browsing
 	}))
 
-	// Print out all files in the embedded "frontend/dist" directory for debugging
-	fs, _ := staticFiles.ReadDir("frontend/dist")
-	for _, file := range fs {
-		log.Println(file.Name())
+	// Start the Fiber app
+	if err := app.Listener(http.ResponseWriter(w), r); err != nil {
+		log.Fatal(err)
 	}
+}
 
-	log.Fatal(app.Listen("127.0.0.1:3000"))
+func main() {
+	// In a typical server environment, you would use app.Listen here.
+	// For serverless environments like Vercel, we use the Handler function to be invoked by Vercel.
+	fmt.Println("Serverless function is ready")
+
+	// If you test it locally, you can call Handler directly:
+	// Handler(nil, nil) // Only for testing locally
 }
